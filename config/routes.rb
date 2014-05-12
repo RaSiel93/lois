@@ -5,6 +5,8 @@ Rails.application.routes.draw do
   # You can have the root of your site routed with "root"
   root 'solver#index'
 
+  get 'solve/:conditions' => 'solver#solve'
+
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
