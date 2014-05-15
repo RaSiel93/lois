@@ -1,6 +1,6 @@
 class SolverController < ApplicationController
   def index
-    
+    @rules = Rule.all
   end
 
   def solve

@@ -2,24 +2,13 @@
   #rules.fl.block
     h1
       ' Rules:
-      = link_to '+', 'javascript: void(0)', class: 'add'
+      = link_to '+', 'javascript: void(0)', class: 'add-rule'
     ul
-      li
-        ' U(X) -> Y(Z); G(Y)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
-      li
-        ' U(X) -> C(A)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
-      li
-        ' Y(X) -> A(D); B(D); D(D); C(D); C(Y)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
-      li
-        ' Y(C) -> A(E); E(Q)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
+      = render @rules
   #regulations.fl.block
     h1
       ' Facts:
-      = link_to '+', 'javascript: void(0)', class: 'add'
+      = link_to '+', 'javascript: void(0)', class: 'add-fact'
     ul
       li
         ' G(Y); Y(Z)
@@ -42,3 +31,15 @@
       li ELFIJew lifjwel jfew
       li IELIjflejwl jelwjfle
   .clear
+
+#add-rule
+  div
+    h1 Adding Rule
+    input
+    button Add Rule
+
+#add-fact
+  div
+    h1 Adding Fact
+    input
+    button Add Fact
