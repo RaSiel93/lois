@@ -1,17 +1,35 @@
 #content
-  #formulas.fl.block
-    h1 Rules:
+  #rules.fl.block
+    h1
+      ' Rules:
+      = link_to '+', 'javascript: void(0)', class: 'add'
     ul
-      li U(X) -> Y(Z); G(Y)
-      li U(X) -> C(A)
-      li Y(X) -> A(D); B(D); D(D); C(D); C(Y)
-      li Y(C) -> A(E); E(Q)
+      li
+        ' U(X) -> Y(Z); G(Y)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
+      li
+        ' U(X) -> C(A)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
+      li
+        ' Y(X) -> A(D); B(D); D(D); C(D); C(Y)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
+      li
+        ' Y(C) -> A(E); E(Q)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
   #regulations.fl.block
-    h1 Facts:
+    h1
+      ' Facts:
+      = link_to '+', 'javascript: void(0)', class: 'add'
     ul
-      li G(Y); Y(Z)
-      li B(D); D(D)
-      li G(Y)
+      li
+        ' G(Y); Y(Z)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
+      li
+        ' B(D); D(D)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
+      li
+        ' G(Y)
+        = link_to 'X', 'javascript: void(0)', class: 'close'
   .clear
 #panel
   #solve

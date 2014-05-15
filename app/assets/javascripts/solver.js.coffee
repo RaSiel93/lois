@@ -11,3 +11,5 @@ $ ->
         if( data.status == 'success')
           $('#solver ul').append('<li>'+data.result+'</li>')
         else
+  $('.close').on 'click', ()->
+    $(this).parent().remove()
