@@ -4,9 +4,23 @@ class SolverController < ApplicationController
   end
 
   def solve
-    result = 'RASIEL'
     respond_to do |format|
-      format.js { render json: { result: result, status: 'success' } }
+      if check_condition( condition_params[:condition] )
+        format.js { render json: { result: params[:condition], status: 'success' } }
+      else
+        binding.pry
+        format.js { render json: { status: 'error' } }
+      end
     end
+  end
+
+  private
+
+  def check_condition condition
+    condition[/\(.*\)$/]
+  end
+
+  def condition_params
+    params.permit(:condition)
   end
 end

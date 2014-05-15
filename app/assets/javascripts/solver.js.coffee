@@ -4,10 +4,10 @@
 
 $ ->
   $('a.btn-solved').on 'click', ()->
-    text = $('input').val()
-    $('#solver ul').append('<li>'+text+'</li>')
     $.ajax
       dataType: "json"
-      url: 'solve/ew'
+      url: 'solve/' + $('input').val()
       success:  (data, status, xhr) ->
-        alert data.result
+        if( data.status == 'success')
+          $('#solver ul').append('<li>'+data.result+'</li>')
+        else
