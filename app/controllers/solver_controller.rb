@@ -8,7 +8,6 @@ class SolverController < ApplicationController
       if check_condition( condition_params[:condition] )
         format.js { render json: { result: params[:condition], status: 'success' } }
       else
-        binding.pry
         format.js { render json: { status: 'error' } }
       end
     end

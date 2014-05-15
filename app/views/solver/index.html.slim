@@ -1,25 +1,26 @@
-#panel
-  #solve
-    input
-    = link_to 'Solve', 'javascript: void(0)', class: 'btn-solved'
 #content
   #formulas.fl.block
-    h1 Formulas:
+    h1 Rules:
     ul
       li U(X) -> Y(Z); G(Y)
       li U(X) -> C(A)
       li Y(X) -> A(D); B(D); D(D); C(D); C(Y)
       li Y(C) -> A(E); E(Q)
-  #solver.fl.block
-    h1 Solver:
+  #regulations.fl.block
+    h1 Facts:
+    ul
+      li G(Y); Y(Z)
+      li B(D); D(D)
+      li G(Y)
+  .clear
+#panel
+  #solve
+    input
+    = link_to 'Solve', 'javascript: void(0)', class: 'btn-solved'
+  #solver.block
+    h1 Answer:
     ul
       li DLFilejwlfjwle LSDFJ
       li ELFIJew lifjwel jfew
       li IELIjflejwl jelwjfle
-  #regulations.fl.block
-    h1 Regulations:
-    ul
-      li adlfj;ewaef
-      li adlfj;ewaef
-      li adlfj;ewaef
   .clear
