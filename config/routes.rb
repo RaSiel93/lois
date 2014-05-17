@@ -7,7 +7,7 @@ Rails.application.routes.draw do
 
   get 'solve/:condition' => 'solver#solve'
 
-  resources 'rule'
+  resources :rule, :facts
 
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'

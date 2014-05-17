@@ -1,24 +1,12 @@
 #content
   #rules.fl.block
-    h1
-      ' Rules:
-      = link_to '+', 'javascript: void(0)', class: 'add-rule'
-    ul
-      = render @rules
-  #regulations.fl.block
-    h1
-      ' Facts:
-      = link_to '+', 'javascript: void(0)', class: 'add-fact'
-    ul
-      li
-        ' G(Y); Y(Z)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
-      li
-        ' B(D); D(D)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
-      li
-        ' G(Y)
-        = link_to 'X', 'javascript: void(0)', class: 'close'
+    = link_to '+', 'javascript: void(0)', class: 'add-rule'
+    h1 Rules:
+    ul = render @rules
+  #facts.fl.block
+    = link_to '+', 'javascript: void(0)', class: 'add-fact'
+    h1 Facts:
+    ul = render @facts
   .clear
 #panel
   #solve
@@ -27,10 +15,8 @@
   #solver.block
     h1 Answer:
     ul
-      li DLFilejwlfjwle LSDFJ
-      li ELFIJew lifjwel jfew
-      li IELIjflejwl jelwjfle
-  .clear
+      li
+        ' X = b, Y = c, Z = y
 
 #add-rule
   div
