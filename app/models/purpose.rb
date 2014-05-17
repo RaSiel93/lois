@@ -27,7 +27,7 @@ class Purpose
   private
   def substitution solutions
     solutions.map.with_index do |s, i|
-      s.map{|i, c| "#{params[i]} -> #{c.name}"}
+      s.map{|i, c| "#{params[i]} -> #{c.name}"}.join(', ')
     end
   end
 
