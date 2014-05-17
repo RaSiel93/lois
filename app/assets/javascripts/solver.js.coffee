@@ -11,7 +11,10 @@ $ ->
       url: 'solve/' + $('input').val()
       success:  (data, status, xhr) ->
         if(data.status == 'success')
-          $('#solver ul').append('<li>'+data.result+'</li>')
+          $('#solver ul').empty()
+          $.each data.result, ( index, value ) ->
+            $('#solver ul').append('<li>'+value+'</li>')
+
   $('.close').on 'click', ()->
     $(this).parent().remove()
 
@@ -23,9 +26,9 @@ $ ->
       type: 'post'
       dataType: "json"
       url: 'rule'
-      data: { rule: { title: $('#add-rule input').val()} }
+      data: { rule: $('#add-rule input').val() }
       success:  (data, status, xhr) ->
-        $('#rules ul').append("<li>"+data.result.title+"<a class='close' data-method='delete' data-remote='true' href='/rule/"+data.result.id+"' rel='nofollow'>X</a></li>")
+        $('#rules ul').append("<li>"+data.result+"<a class='close' data-method='delete' data-remote='true' href='/rule/"+data.result.id+"' rel='nofollow'>X</a></li>")
         $('#add-rule').trigger('closeModal')
         $('.close').on 'click', ()->
           $(this).parent().remove()

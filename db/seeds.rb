@@ -8,14 +8,14 @@ Predicate.delete_all
 ResultingPredicate.delete_all
 predicates = rules.each_with_object([]) do |r, p|
   p << ResultingPredicate.create(name: ('A'..'Z').to_a.sample, rule: r)
-  (rand(5) + 1).times do
+  (rand(2) + 1).times do
     p << Predicate.create(name: ('A'..'Z').to_a.sample, rule: r)
   end
 end
 
 Parameter.delete_all
 parameters = predicates.each_with_object([]) do |pr, p|
-  (rand(3) + 1).times do
+  (rand(2) + 1).times do
     p << Parameter.create(name: ('A'..'Z').to_a.sample, basic_predicate: pr)
   end
 end
