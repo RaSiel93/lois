@@ -1,0 +1,2 @@
+class ResultingPredicate < BasicPredicate
+end
