@@ -1,6 +1,7 @@
 class SolverController < ApplicationController
   def index
     @rules = Rule.all
+    @facts = Fact.all
   end
 
   def solve
