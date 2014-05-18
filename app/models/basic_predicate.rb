@@ -13,6 +13,15 @@ class BasicPredicate < ActiveRecord::Base
     name + '(' + parameters.to_a.join(', ') + ')'
   end
 
+  def parameters_hash
+    parameters.map(&:name).map.with_index.inject({}) do |h, p|
+      key, val = p
+      h[key] ||= []
+      h[key] << val
+      h
+    end
+  end
+
   private
 
   def build_name params

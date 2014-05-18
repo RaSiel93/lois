@@ -12,15 +12,69 @@ class Purpose
     solutions += find_facts.each_with_object([]) do |fact, s|
       s << fact.constants_hash
     end
-    # solutions += find_rules.each_with_object([]) do |rule, sol|
-    #   solutions_deep = rule.predicates.each_with_object([]) do |predicat, sd|
-    #     sd << Purpose.new(predicat.to_s).decide
-    #   end
-    #   solutions_deep.join.each_with_object([]) do |sd, sol|
-    #     sol << Hash[[*sd.map.with_index]].invert
-    #   end
-    # end
-    substitution solutions
+
+    solutions += find_rules.map do |rule|
+      solutions_deep = rule.predicates.map() do |predicate|
+        s = Purpose.new(predicate.to_s.gsub(' ', '')).decide
+
+        pp = hash_params_to_hash_numbers_params predicate.parameters_hash
+        par = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
+
+        s.map do |ss|
+          ss.inject({}) do |h, sss|
+            h[ par[ pp[sss.first] ] ] = sss.last
+            h
+          end
+        end
+      end
+      solutions_deep.flatten
+      # solutions_deep.each_with_object([]) do |sd, sol|
+      #   sol << Hash[[*sd.map.with_index]].invert
+      # end
+    end
+    #substitution
+    good_solutions( solutions.flatten )
+  end
+
+  def good_solutions solutions
+    solutions.select do |solution|
+      params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
+    end
+  end
+
+
+  # def substitution solutions
+  #   solutions.map do |s|
+  #     params.inject({}) do |h, p|
+  #       key, value = p
+  #       h[key] = s[value.first]
+  #       h
+  #     end
+  #   end
+  # end
+
+
+  def substitution solutions
+    solutions.flat_map do |solution|
+      params.inject({}) do |h, p|
+        h[p.first] = solution[p.last.first]
+        h
+      end
+    end
+  end
+
+  def print solutions
+    decorate( substitution( solutions ))
+  end
+
+  def hash_params_to_hash_numbers_params hash
+    hash.inject({}){|h, p| p.last.each{|n| h[n] = p.first}; h}
+  end
+
+  def decorate solutions
+    solutions.map do |s|
+      params.map{|p| "#{p.first} -> #{s[p.first]}"}.join(', ')
+    end
   end
 
   private
@@ -56,9 +110,7 @@ class Purpose
 
   def find_facts
     Fact.where(name: name).each_with_object([]) do |f, r|
-      if f.constants.count == count_params && check_constants(f.constants_hash)
-        r << f
-      end
+      r << f if f.constants.count == count_params && check_constants(f.constants_hash)
     end
   end
 
@@ -69,14 +121,8 @@ class Purpose
   end
 
   def find_rules
-    rules = ResultingPredicate.where(name: name).each_with_object([]) do |r, rules|
-      rules << r.rule
-    end
-  end
-
-  def substitution solutions
-    solutions.map.with_index do |s, i|
-      params.map{|p| "#{p.first} -> #{s[p.last.first]}"}.join(', ')
+    Rule.select() do |rule|
+      rule.resulting_predicate.name == name && rule.resulting_predicate.parameters.count == count_params
     end
   end
 end
