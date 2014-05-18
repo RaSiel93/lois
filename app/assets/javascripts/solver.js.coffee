@@ -1,7 +1,3 @@
-# Place all the behaviors and hooks related to the matching controller here.
-# All this logic will automatically be available in application.js.
-# You can use CoffeeScript in this file: http://coffeescript.org/
-
 $ ->
   $('#add-rule').easyModal()
   $('#add-fact').easyModal()
@@ -31,6 +27,21 @@ $ ->
       success:  (data, status, xhr) ->
         $('#rules ul').append("<li>"+data.result+"<a class='close' data-method='delete' data-remote='true' href='/rule/"+data.result.id+"' rel='nofollow'>X</a></li>")
         $('#add-rule').trigger('closeModal')
+        $('.close').on 'click', ()->
+          $(this).parent().remove()
+
+  $('.add-fact').on 'click', ()->
+    $('#add-fact').trigger('openModal')
+    $('#add-fact input').focus()
+  $('#add-fact button').on 'click', ()->
+    $.ajax
+      type: 'post'
+      dataType: "json"
+      url: 'fact'
+      data: { fact: $('#add-fact input').val() }
+      success:  (data, status, xhr) ->
+        $('#facts ul').append("<li>"+data.result+"<a class='close' data-method='delete' data-remote='true' href='/fact/"+data.result.id+"' rel='nofollow'>X</a></li>")
+        $('#add-fact').trigger('closeModal')
         $('.close').on 'click', ()->
           $(this).parent().remove()
 
