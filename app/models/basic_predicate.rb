@@ -1,6 +1,6 @@
 class BasicPredicate < ActiveRecord::Base
   belongs_to :rule
-  has_many :parameters
+  has_many :parameters, dependent: :destroy
 
   def build params
     check(params) \

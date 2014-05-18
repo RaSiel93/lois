@@ -1,5 +1,5 @@
 class Rule < ActiveRecord::Base
-  has_many :predicates
+  has_many :predicates, dependent: :destroy
   has_one :resulting_predicate
 
   def build params

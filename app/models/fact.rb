@@ -1,5 +1,5 @@
 class Fact < ActiveRecord::Base
-  has_many :constants
+  has_many :constants, dependent: :destroy
 
   def build params
     check(params) \
