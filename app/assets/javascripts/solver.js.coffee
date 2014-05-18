@@ -7,6 +7,7 @@ $ ->
   $('#add-fact').easyModal()
   $('a.btn-solved').on 'click', ()->
     $.ajax
+      type: 'post'
       dataType: "json"
       url: 'solve/' + $('input').val()
       success:  (data, status, xhr) ->
