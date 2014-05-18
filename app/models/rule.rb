@@ -3,15 +3,10 @@ class Rule < ActiveRecord::Base
   has_one :resulting_predicate
 
   def build params
-    if check params
-      resulting_predicate = ResultingPredicate.new(rule: self).build(params[/^\w*\(.*\)(?=->)/])
-      return nil unless resulting_predicate.save
-      params[/(?<=>)[ ]*\w[\w]*\(.*\)/].split(';').map(&:strip).map do |param|
-        predicate = Predicate.new(rule: self).build(param)
-        return nil unless predicate.save
-      end
-    end
-    self
+    check(params) \
+      && build_resulting_predicate(parse_resulting_predicate(params)) \
+      && build_predicates(parse_predicates(params)) \
+      ? self : nil
   end
 
   def predicates
@@ -24,7 +19,29 @@ class Rule < ActiveRecord::Base
 
   private
 
+  def build_resulting_predicate params
+    resulting_predicate = ResultingPredicate.new(rule: self)
+    resulting_predicate.build(params)
+    resulting_predicate.save ? self : nil
+  end
+
+  def build_predicates params
+    params.map do |param|
+      predicate = Predicate.new(rule: self)
+      predicate.build(param)
+      return nil unless predicate.save
+    end
+  end
+
+  def parse_resulting_predicate params
+    params[/^\w*\(.*\)(?=->)/]
+  end
+
+  def parse_predicates params
+    params[/(?<=>)\w[\w]*\(.*\)/].split(';')
+  end
+
   def check params
-    params[/^\w[\w]*\(\w*[,[ ]*\w]*\)->\w[\w]*\(\w*[,[ ]*\w*]*\)[;[ ]*\w[\w]*\(\w*[,[ ]*\w]*\)]*/]
+    params[/^\w[\w]*\(\w*[,\w]*\)->\w[\w]*\(\w*[,\w*]*\)[;\w[\w]*\(\w*[,\w]*\)]*/]
   end
 end

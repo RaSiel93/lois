@@ -3,9 +3,11 @@ class RuleController < ApplicationController
 
   def create
     @rule = Rule.new.build(rule_params)
-    if @rule.save
-      respond_to do |format|
+    respond_to do |format|
+      if @rule.try :save
         format.js { render json: { result: @rule.to_s, status: 'success' } }
+      else
+        format.js { render json: { status: 'fail' } }
       end
     end
   end
@@ -21,7 +23,7 @@ class RuleController < ApplicationController
   private
 
   def rule_params
-    params.permit(:rule)[:rule]
+    params.permit(:rule)[:rule].gsub(' ', '')
   end
 
   def set_rule
