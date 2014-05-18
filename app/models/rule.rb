@@ -20,16 +20,12 @@ class Rule < ActiveRecord::Base
   private
 
   def build_resulting_predicate params
-    resulting_predicate = ResultingPredicate.new(rule: self)
-    resulting_predicate.build(params)
-    resulting_predicate.save ? self : nil
+    ResultingPredicate.new(rule: self).build(params).try :save
   end
 
   def build_predicates params
     params.map do |param|
-      predicate = Predicate.new(rule: self)
-      predicate.build(param)
-      return nil unless predicate.save
+      Predicate.new(rule: self).build(param).try :save
     end
   end
 

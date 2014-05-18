@@ -7,7 +7,7 @@ class RuleController < ApplicationController
       if @rule.try :save
         format.js { render json: { result: @rule.to_s, status: 'success' } }
       else
-        format.js { render json: { status: 'fail' } }
+        format.js { render json: { status: 'error' } }
       end
     end
   end

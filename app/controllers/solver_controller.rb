@@ -6,12 +6,18 @@ class SolverController < ApplicationController
 
   def solve
     respond_to do |format|
-      if @purpose = Purpose.new(params[:purpose])
-        solutions = @purpose.decide
+      if purpose = Purpose.new(purpose_params)
+        solutions = purpose.decide
         format.js { render json: { result: solutions, status: 'success' } }
       else
         format.js { render json: { status: 'error' } }
       end
     end
+  end
+
+  private
+
+  def purpose_params
+    params[:purpose].gsub(' ', '')
   end
 end

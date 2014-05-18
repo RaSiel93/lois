@@ -3,7 +3,10 @@ class BasicPredicate < ActiveRecord::Base
   has_many :parameters
 
   def build params
-    check(params) && build_name(parse_name(params)) && build_parameters(parse_parameters(params)) ? self : nil
+    check(params) \
+      && build_name(parse_name(params)) \
+      && build_parameters(parse_parameters(params)) \
+      ? self : nil
   end
 
   def to_s
@@ -18,8 +21,7 @@ class BasicPredicate < ActiveRecord::Base
 
   def build_parameters params
     params.map do |p|
-      parameter = Parameter.new(name: p, basic_predicate: self)
-      return nil unless parameter.save
+      Parameter.new(name: p, basic_predicate: self).try :save
     end
   end
 
