@@ -9,71 +9,76 @@ class Purpose
   end
 
   def print solutions
-    decorate( filter_for_constants( substitution( solutions )))
+    decorate( filter_for_constants( solutions ))
   end
 
   def decide
     solutions = []
-    solutions += find_facts.each_with_object([]) do |fact, s|
-      binding.pry
-      s << fact.constants_hash
-    end
-
-    unless visited?
-      solutions += find_rules.map do |rule|
-        hash = solutions_to_hash( compatible_solutions( predicate_solutions( rule )))
-        next if hash.empty?
-        binding.pry
-        hash.count > 1 ? inner_join( hash ) : [hash]
-      end
-    end
-    good_solutions( solutions.flatten.compact )
+    solutions += solutions_from_facts
+    solutions += solutions_from_rules unless visited?
+    filter_solutions solutions
   end
 
   private
 
-  def predicate_solutions rule
-    predicate_solutions = rule.predicates.map do |predicate|
-
-      predicate_params = hash_params_to_hash_numbers_params predicate.parameters_hash
-      resulting_params = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
-
-      binding.pry
-
-      visited = true if name == predicate.name && count_params == predicate.count_params
-      Purpose.new(predicate.to_s.gsub(' ', ''), {visited: visited}).decide
+  def decorate solutions
+    solutions.map do |s|
+      params.map{|p| p.first != p.first.downcase ? "#{p.first} = #{s[p.first]}" : nil}.compact.join(', ')
     end
-    binding.pry
-    predicate_solutions.compact
+  end
+
+  def filter_solutions solutions
+    solutions.compact!
+    solutions.uniq!
+    correct_solutions solutions
+  end
+  def correct_solutions solutions
+    solutions.select do |solution|
+      params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
+    end
   end
 
   def filter_for_constants solutions
     solutions.select{|s| s.map{|k, v| k == k.downcase ? k == v : true}.all?}
   end
 
-  def substitution solutions
-    solutions.flat_map do |solution|
-      params.inject({}) do |h, p|
-        h[p.first] = solution[p.last.first]
-        h
-      end
+  def solutions_from_facts
+    find_facts.map{|fact, s| substitution fact.constants_hash}
+  end
+
+  def solutions_from_rules
+    find_rules.flat_map do |rule|
+      solutions = inner_join( compatible_solutions( predicate_solutions( rule )))
+      schema = params.inject({}){|h, p| k, v = p; h[rule.resulting_predicate.parameters_position[v.first]] = k; h}
+      solutions.map{|s| h = {}; schema.each{|sch| h[sch.last] = s[sch.first]}; h}
     end
   end
 
-  def good_solutions solutions
-    solutions.uniq.select do |solution|
-      params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
+  def predicate_solutions rule
+    rule.predicates.map do |predicate|
+      #predicate_params = hash_params_to_hash_numbers_params predicate.parameters_hash
+      #resulting_params = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
+      visited = name == predicate.name && count_params == predicate.count_params
+      Purpose.new(predicate.to_s.gsub(' ', ''), {visited: visited}).decide
     end
   end
+
+  def inner_join solutions
+    return solutions if solutions.size == 1
+    hash = solutions_to_hash(solutions)
+    values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
+    values.map{|v| Hash[*hash.keys.zip(v).flatten]}
+  end
+
+
+
+  def substitution solution
+    params.inject({}){|h, p| h[p.first] = solution[p.last.first]; h}
+  end
+
 
   def hash_params_to_hash_numbers_params hash
     hash.inject({}){|h, p| p.last.each{|n| h[n] = p.first}; h}
-  end
-
-  def decorate solutions
-    solutions.map do |s|
-      params.map{|p| p.first != p.first.downcase ? "#{p.first} = #{s[p.first]}" : nil}.compact.join(', ')
-    end
   end
 
   def compatible_solutions solutions
@@ -92,16 +97,10 @@ class Purpose
     solutions.flatten.inject({}) do |h, s|
       s.each do |key, value|
         h[key] ||= []
-        h[key] << value
+        h[key] << value if !h[key].include?(value)
       end
       h
     end
-  end
-
-  def inner_join hash
-    #!!!
-    values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
-    values.map(){|r| r.map.with_index{|e, i| [i, e]}.inject({}){|r, e| k, v = e; r[k] = v; r}}
   end
 
   def build_name params
