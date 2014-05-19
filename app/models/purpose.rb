@@ -14,7 +14,7 @@ class Purpose
     end
 
     solutions += find_rules.map do |rule|
-      solutions_deep = rule.predicates.map() do |predicate|
+      predicate_solutions = rule.predicates.map do |predicate|
         s = Purpose.new(predicate.to_s.gsub(' ', '')).decide
 
         pp = hash_params_to_hash_numbers_params predicate.parameters_hash
@@ -27,17 +27,14 @@ class Purpose
           end
         end
       end
-      solutions_deep.flatten
-      # solutions_deep.each_with_object([]) do |sd, sol|
-      #   sol << Hash[[*sd.map.with_index]].invert
-      # end
+      hash = solutions_to_hash( compatible_solutions( predicate_solutions ))
+      hash.count > 1 ? inner_join( hash ) : [hash]
     end
-    #substitution
     good_solutions( solutions.flatten )
   end
 
   def good_solutions solutions
-    solutions.select do |solution|
+    solutions.uniq.select do |solution|
       params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
     end
   end
@@ -78,6 +75,33 @@ class Purpose
   end
 
   private
+
+  def compatible_solutions solutions
+    solutions.map{|ps| ps.select{|s| compatible_solution?(s, solutions)}}
+  end
+
+  def compatible_solution? solution, solutions
+    solutions.map{|ps| ps.any?{|s| compatable_solutions?(s, solution)}}.all?
+  end
+
+  def compatable_solutions? s1, s2
+    s1.merge(s2){|key, v1, v2| v1 == v2}.values.all?
+  end
+
+  def solutions_to_hash solutions
+    solutions.flatten.inject({}) do |h, s|
+      s.each do |key, value|
+        h[key] ||= []
+        h[key] << value
+      end
+      h
+    end
+  end
+
+  def inner_join hash
+    values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
+    values.map(){|r| r.map.with_index{|e, i| [i, e]}.inject({}){|r, e| k, v = e; r[k] = v; r}}
+  end
 
   def build_name params
     self.name = params
