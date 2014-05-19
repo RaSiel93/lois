@@ -8,7 +8,7 @@ class Purpose
   end
 
   def print solutions
-    decorate( substitution( solutions ))
+    decorate( filter_for_constants( substitution( solutions )))
   end
 
   def decide
@@ -40,6 +40,10 @@ class Purpose
     end
   end
 
+  def filter_for_constants solutions
+    solutions.select{|s| s.map{|k, v| k == k.downcase ? k == v : true}.all?}
+  end
+
   def substitution solutions
     solutions.flat_map do |solution|
       params.inject({}) do |h, p|
@@ -61,7 +65,7 @@ class Purpose
 
   def decorate solutions
     solutions.map do |s|
-      params.map{|p| "#{p.first} = #{s[p.first]}"}.join(', ')
+      params.map{|p| p.first != p.first.downcase ? "#{p.first} = #{s[p.first]}" : nil}.compact.join(', ')
     end
   end
 
