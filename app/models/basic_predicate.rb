@@ -22,6 +22,10 @@ class BasicPredicate < ActiveRecord::Base
     end
   end
 
+  def count_params
+    parameters.count
+  end
+
   private
 
   def build_name params

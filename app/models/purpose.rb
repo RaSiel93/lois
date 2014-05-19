@@ -1,7 +1,8 @@
 class Purpose
-  attr_accessor :name, :params
+  attr_accessor :name, :params, :visited
 
-  def initialize params
+  def initialize params, attr_params = {}
+    self.visited = attr_params[:visited]
     check params \
       && build_name(parse_name(params)) \
       && build_params(parse_params(params))
@@ -14,30 +15,36 @@ class Purpose
   def decide
     solutions = []
     solutions += find_facts.each_with_object([]) do |fact, s|
+      binding.pry
       s << fact.constants_hash
     end
 
-    solutions += find_rules.map do |rule|
-      hash = solutions_to_hash( compatible_solutions( predicate_solutions( rule )))
-      hash.count > 1 ? inner_join( hash ) : [hash]
+    unless visited?
+      solutions += find_rules.map do |rule|
+        hash = solutions_to_hash( compatible_solutions( predicate_solutions( rule )))
+        next if hash.empty?
+        binding.pry
+        hash.count > 1 ? inner_join( hash ) : [hash]
+      end
     end
-    good_solutions( solutions.flatten )
+    good_solutions( solutions.flatten.compact )
   end
 
   private
 
   def predicate_solutions rule
-    rule.predicates.map do |predicate|
+    predicate_solutions = rule.predicates.map do |predicate|
+
       predicate_params = hash_params_to_hash_numbers_params predicate.parameters_hash
       resulting_params = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
 
-      Purpose.new(predicate.to_s.gsub(' ', '')).decide.map do |solutions|
-        solutions.inject({}) do |result, solution|
-          result[ resulting_params[ predicate_params[solution.first] ] ] = solution.last
-          result
-        end
-      end
+      binding.pry
+
+      visited = true if name == predicate.name && count_params == predicate.count_params
+      Purpose.new(predicate.to_s.gsub(' ', ''), {visited: visited}).decide
     end
+    binding.pry
+    predicate_solutions.compact
   end
 
   def filter_for_constants solutions
@@ -92,6 +99,7 @@ class Purpose
   end
 
   def inner_join hash
+    #!!!
     values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
     values.map(){|r| r.map.with_index{|e, i| [i, e]}.inject({}){|r, e| k, v = e; r[k] = v; r}}
   end
@@ -115,6 +123,10 @@ class Purpose
       h[key] << val
       h
     end
+  end
+
+  def visited?
+    self.visited
   end
 
   def check params
