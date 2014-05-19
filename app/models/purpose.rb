@@ -15,7 +15,7 @@ class Purpose
   def decide
     solutions = []
     solutions += solutions_from_facts
-    solutions += solutions_from_rules unless visited?
+    solutions += solutions_from_rules.select{|s| !s.empty?} unless visited?
     filter_solutions solutions
   end
 
@@ -50,15 +50,10 @@ class Purpose
     find_rules.flat_map do |rule|
       solutions = inner_join( compatible_solutions( predicate_solutions( rule )))
       resulting_position = rule.resulting_predicate.parameters_position
-      schema = params.inject({}){|h, p| k, v = p; p v; v.each{|v2| h[resulting_position[v2]] ||= []; h[resulting_position[v2]] << k}; h}
+      schema = params.inject({}){|h, p| k, v = p; v.each{|v2| h[resulting_position[v2]] ||= []; h[resulting_position[v2]] << k}; h}
       ss = solutions.map{|s| h = {}; schema.each{|k, v| v.each{|val| h[val] ||= []; h[val] << s[k]}}; h}
-      ss.select{|s| s.all?{|k, v| v.uniq.size == 1}}.inject({}){|h, s| s.map{|k, v| h[k] = v.first; h}}
+      ss.select{|s| s.all?{|k, v| v.uniq.size == 1}}.inject({}){|h, s| s.map{|k, v| h[k] = v.first}; h}
     end
-  end
-
-  def get_valid_solutions solutions, parameters_position
-    binding.pry
-    params.values.all?{|p| p.map{|k| rule.resulting_predicate.parameters_position[k]}.uniq.size == 1}
   end
 
   def predicate_solutions rule
