@@ -10,6 +10,7 @@ $ ->
         if(data.status == 'success')
           $('#solver ul').empty()
           $.each data.result, ( index, value ) ->
+            value = 'ЕСТЬ ТАКОЙ!' if value == ''
             $('#solver ul').append('<li>'+value+'</li>')
 
   $('.close').on 'click', ()->

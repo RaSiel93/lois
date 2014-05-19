@@ -49,22 +49,27 @@ class Purpose
   def solutions_from_rules
     find_rules.flat_map do |rule|
       solutions = inner_join( compatible_solutions( predicate_solutions( rule )))
-      schema = params.inject({}){|h, p| k, v = p; h[rule.resulting_predicate.parameters_position[v.first]] = k; h}
-      solutions.map{|s| h = {}; schema.each{|sch| h[sch.last] = s[sch.first]}; h}
+      resulting_position = rule.resulting_predicate.parameters_position
+      schema = params.inject({}){|h, p| k, v = p; p v; v.each{|v2| h[resulting_position[v2]] ||= []; h[resulting_position[v2]] << k}; h}
+      ss = solutions.map{|s| h = {}; schema.each{|k, v| v.each{|val| h[val] ||= []; h[val] << s[k]}}; h}
+      ss.select{|s| s.all?{|k, v| v.uniq.size == 1}}.inject({}){|h, s| s.map{|k, v| h[k] = v.first; h}}
     end
+  end
+
+  def get_valid_solutions solutions, parameters_position
+    binding.pry
+    params.values.all?{|p| p.map{|k| rule.resulting_predicate.parameters_position[k]}.uniq.size == 1}
   end
 
   def predicate_solutions rule
     rule.predicates.map do |predicate|
-      #predicate_params = hash_params_to_hash_numbers_params predicate.parameters_hash
-      #resulting_params = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
       visited = name == predicate.name && count_params == predicate.count_params
       Purpose.new(predicate.to_s.gsub(' ', ''), {visited: visited}).decide
     end
   end
 
   def inner_join solutions
-    return solutions if solutions.size == 1
+    return solutions.first if solutions.size == 1
     hash = solutions_to_hash(solutions)
     values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
     values.map{|v| Hash[*hash.keys.zip(v).flatten]}
