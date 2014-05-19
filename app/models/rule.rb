@@ -14,7 +14,7 @@ class Rule < ActiveRecord::Base
   end
 
   def to_s
-    resulting_predicate.to_s + " -> " + predicates.to_a.join('; ') + "."
+    resulting_predicate.to_s + " <- " + predicates.to_a.join('; ') + "."
   end
 
   private
@@ -30,14 +30,14 @@ class Rule < ActiveRecord::Base
   end
 
   def parse_resulting_predicate params
-    params[/^\w*\(.*\)(?=->)/]
+    params[/^\w*\(.*\)(?=<-)/]
   end
 
   def parse_predicates params
-    params[/(?<=>)\w[\w]*\(.*\)/].split(';')
+    params[/(?<=-)\w[\w]*\(.*\)/].split(';')
   end
 
   def check params
-    params[/^\w[\w]*\(\w*[,\w]*\)->\w[\w]*\(\w*[,\w*]*\)[;\w[\w]*\(\w*[,\w]*\)]*/]
+    params[/^\w[\w]*\(\w*[,\w]*\)<-\w[\w]*\(\w*[,\w*]*\)[;\w[\w]*\(\w*[,\w]*\)]*/]
   end
 end

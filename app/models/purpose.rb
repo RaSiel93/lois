@@ -70,7 +70,7 @@ class Purpose
 
   def decorate solutions
     solutions.map do |s|
-      params.map{|p| "#{p.first} -> #{s[p.first]}"}.join(', ')
+      params.map{|p| "#{p.first} = #{s[p.first]}"}.join(', ')
     end
   end
 
