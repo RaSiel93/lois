@@ -7,6 +7,10 @@ class Purpose
       && build_params(parse_params(params))
   end
 
+  def print solutions
+    decorate( substitution( solutions ))
+  end
+
   def decide
     solutions = []
     solutions += find_facts.each_with_object([]) do |fact, s|
@@ -14,42 +18,27 @@ class Purpose
     end
 
     solutions += find_rules.map do |rule|
-      predicate_solutions = rule.predicates.map do |predicate|
-        s = Purpose.new(predicate.to_s.gsub(' ', '')).decide
-
-        pp = hash_params_to_hash_numbers_params predicate.parameters_hash
-        par = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
-
-        s.map do |ss|
-          ss.inject({}) do |h, sss|
-            h[ par[ pp[sss.first] ] ] = sss.last
-            h
-          end
-        end
-      end
-      hash = solutions_to_hash( compatible_solutions( predicate_solutions ))
+      hash = solutions_to_hash( compatible_solutions( predicate_solutions( rule )))
       hash.count > 1 ? inner_join( hash ) : [hash]
     end
     good_solutions( solutions.flatten )
   end
 
-  def good_solutions solutions
-    solutions.uniq.select do |solution|
-      params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
+  private
+
+  def predicate_solutions rule
+    rule.predicates.map do |predicate|
+      predicate_params = hash_params_to_hash_numbers_params predicate.parameters_hash
+      resulting_params = hash_params_to_hash_numbers_params(rule.resulting_predicate.parameters_hash).invert
+
+      Purpose.new(predicate.to_s.gsub(' ', '')).decide.map do |solutions|
+        solutions.inject({}) do |result, solution|
+          result[ resulting_params[ predicate_params[solution.first] ] ] = solution.last
+          result
+        end
+      end
     end
   end
-
-
-  # def substitution solutions
-  #   solutions.map do |s|
-  #     params.inject({}) do |h, p|
-  #       key, value = p
-  #       h[key] = s[value.first]
-  #       h
-  #     end
-  #   end
-  # end
-
 
   def substitution solutions
     solutions.flat_map do |solution|
@@ -60,8 +49,10 @@ class Purpose
     end
   end
 
-  def print solutions
-    decorate( substitution( solutions ))
+  def good_solutions solutions
+    solutions.uniq.select do |solution|
+      params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
+    end
   end
 
   def hash_params_to_hash_numbers_params hash
@@ -73,8 +64,6 @@ class Purpose
       params.map{|p| "#{p.first} = #{s[p.first]}"}.join(', ')
     end
   end
-
-  private
 
   def compatible_solutions solutions
     solutions.map{|ps| ps.select{|s| compatible_solution?(s, solutions)}}
