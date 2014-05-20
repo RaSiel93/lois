@@ -52,7 +52,7 @@ class Purpose
       resulting_position = rule.resulting_predicate.parameters_position
       schema = params.inject({}){|h, p| k, v = p; v.each{|v2| h[resulting_position[v2]] ||= []; h[resulting_position[v2]] << k}; h}
       ss = solutions.map{|s| h = {}; schema.each{|k, v| v.each{|val| h[val] ||= []; h[val] << s[k]}}; h}
-      ss.select{|s| s.all?{|k, v| v.uniq.size == 1}}.inject({}){|h, s| s.map{|k, v| h[k] = v.first}; h}
+      ss.select{|s| s.all?{|k, v| v.uniq.size == 1}}.map(){|s| s.inject({}){|h, el| k, v = el; h[k] = v.first; h}}
     end
   end
 
@@ -64,7 +64,7 @@ class Purpose
   end
 
   def inner_join solutions
-    return solutions.first if solutions.size == 1
+    return solutions.flatten if solutions.size == 1
     hash = solutions_to_hash(solutions)
     values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
     values.map{|v| Hash[*hash.keys.zip(v).flatten]}
