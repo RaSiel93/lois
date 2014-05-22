@@ -1,66 +1,76 @@
 class Purpose
-  attr_accessor :name, :params, :visited
+  attr_accessor :id, :name, :variables
+  @@visited_predicates = {}
 
-  def initialize params, attr_params = {}
-    self.visited = attr_params[:visited]
-    check params \
-      && build_name(parse_name(params)) \
-      && build_params(parse_params(params))
+  def initialize predicate = nil
+    if predicate.present?
+      self.id = predicate.id
+      self.name = predicate.name
+      self.variables = predicate.position_parameters
+    end
   end
-
-  def print solutions
-    decorate( filter_for_constants( solutions ))
+  def build params
+    if check_params( params )
+      self.name = params[/^\w*(?=\()/]
+      self.variables = Hash[[*params[/(?<=\().*(?=\))/].split(',').map.with_index{|p, i| [i, p]}]]
+    end
   end
 
   def decide
-    solutions = []
-    solutions += solutions_from_facts
-    solutions += solutions_from_rules.select{|s| !s.empty?} unless visited?
-    filter_solutions solutions
+    substitution_to_values( filter_solutions( find_solutions ))
+  end
+
+  def print solutions
+    solutions.map{|s| s.map{|p| k, v = p; !constant?(k) ? "#{k} = #{s[k]}" : nil}.compact.join(', ')}
   end
 
   private
 
-  def decorate solutions
-    solutions.map do |s|
-      params.map{|p| p.first != p.first.downcase ? "#{p.first} = #{s[p.first]}" : nil}.compact.join(', ')
-    end
-  end
-
-  def filter_solutions solutions
-    solutions.compact!
-    solutions.uniq!
-    correct_solutions solutions
-  end
-  def correct_solutions solutions
-    solutions.select do |solution|
-      params.values.map{|indexes| indexes.flat_map{|index| solution[index]}.uniq.size == 1}.all?
-    end
-  end
-
-  def filter_for_constants solutions
-    solutions.select{|s| s.map{|k, v| k == k.downcase ? k == v : true}.all?}
+  def find_solutions
+    @@visited_predicates[id] ||= 0
+    @@visited_predicates[id] += 1
+    solutions = []
+    solutions += solutions_from_facts
+    solutions += solutions_from_rules if @@visited_predicates[id] < 2
+    p solutions
+    @@visited_predicates[id] -= 1
+    solutions.compact.uniq
   end
 
   def solutions_from_facts
-    find_facts.map{|fact, s| substitution fact.constants_hash}
+    find_facts.map{|fact, s| fact.position_constants}
+  end
+  def substitution_to_values solutions
+    solutions.map{|s| s.inject({}){|h, p| k, v = p; h[variables[k]] = s[k]; h}}
+  end
+  def substitution_to_value solution
+    variables.inject({}){|h, p| k, v = p; h[v] ||= []; h[v] << solution[k]; h}
+  end
+  def substitution_to_positions solutions, variables
+    solutions.map{|s| s.inject({}){|h, p| k, v = p; h[k] ||= []; h[k] = solution[v]; h}}
   end
 
   def solutions_from_rules
     find_rules.flat_map do |rule|
-      solutions = inner_join( compatible_solutions( predicate_solutions( rule )))
-      resulting_position = rule.resulting_predicate.parameters_position
-      schema = params.inject({}){|h, p| k, v = p; v.each{|v2| h[resulting_position[v2]] ||= []; h[resulting_position[v2]] << k}; h}
-      ss = solutions.map{|s| h = {}; schema.each{|k, v| v.each{|val| h[val] ||= []; h[val] << s[k]}}; h}
-      ss.select{|s| s.all?{|k, v| v.uniq.size == 1}}.map(){|s| s.inject({}){|h, el| k, v = el; h[k] = v.first; h}}
+      solutions = inner_join( compatible_solutions( predicate_solutions( rule ).compact ))
+      pp = rule.resulting_predicate.position_parameters.invert
+      solutions.map{|s| s.inject({}){|h, p| k, v = p; h[pp[k]] = v if pp[k].present?; h}}
+    end
+  end
+  def predicate_solutions rule
+    rule.predicates.map do |p|
+      Purpose.new(p).decide
     end
   end
 
-  def predicate_solutions rule
-    rule.predicates.map do |predicate|
-      visited = name == predicate.name && count_params == predicate.count_params
-      Purpose.new(predicate.to_s.gsub(' ', ''), {visited: visited}).decide
-    end
+  def compatible_solutions solutions
+    solutions.map{|ps| ps.select{|s| compatible_solution?(s, solutions)}}
+  end
+  def compatible_solution? solution, solutions
+    solutions.map{|ps| ps.any?{|s| compatable_solutions?(s, solution)}}.all?
+  end
+  def compatable_solutions? s1, s2
+    s1.merge(s2){|key, v1, v2| v1 == v2}.values.all?
   end
 
   def inner_join solutions
@@ -70,27 +80,33 @@ class Purpose
     values.map{|v| Hash[*hash.keys.zip(v).flatten]}
   end
 
-
-
-  def substitution solution
-    params.inject({}){|h, p| h[p.first] = solution[p.last.first]; h}
+  def filter_solutions solutions
+    solutions.select{|s| substitution_to_value(s).all?{|k, v| constant?( k ) ? k == v.first : v.uniq.size == 1 }}
   end
+
+  def find_facts
+    Fact.where(name: name).each_with_object([]) do |f, r|
+      r << f if f.constants.count == variables.count
+    end
+  end
+  def find_rules
+    Rule.select() do |rule|
+      rule.resulting_predicate.name == name && rule.resulting_predicate.parameters.count == variables.count
+    end
+  end
+
+  def check_params params
+    params[/^\w[\w]*\(\w[,\w*]*\)$/]
+  end
+  def constant? variable
+    variable == variable.downcase
+  end
+
+
 
 
   def hash_params_to_hash_numbers_params hash
     hash.inject({}){|h, p| p.last.each{|n| h[n] = p.first}; h}
-  end
-
-  def compatible_solutions solutions
-    solutions.map{|ps| ps.select{|s| compatible_solution?(s, solutions)}}
-  end
-
-  def compatible_solution? solution, solutions
-    solutions.map{|ps| ps.any?{|s| compatable_solutions?(s, solution)}}.all?
-  end
-
-  def compatable_solutions? s1, s2
-    s1.merge(s2){|key, v1, v2| v1 == v2}.values.all?
   end
 
   def solutions_to_hash solutions
@@ -100,57 +116,6 @@ class Purpose
         h[key] << value if !h[key].include?(value)
       end
       h
-    end
-  end
-
-  def build_name params
-    self.name = params
-  end
-
-  def build_params params
-    self.params = params
-  end
-
-  def parse_name params
-    params[/^\w*(?=\()/]
-  end
-
-  def parse_params params
-    [*params[/(?<=\().*(?=\))/].split(',').map.with_index].inject({}) do |h, p|
-      key, val = p
-      h[key] ||= []
-      h[key] << val
-      h
-    end
-  end
-
-  def visited?
-    self.visited
-  end
-
-  def check params
-    params[/^\w[\w]*\(\w[,\w*]*\)$/]
-  end
-
-  def count_params
-    params.values.flatten.count
-  end
-
-  def find_facts
-    Fact.where(name: name).each_with_object([]) do |f, r|
-      r << f if f.constants.count == count_params && check_constants(f.constants_hash)
-    end
-  end
-
-  def check_constants constants
-    params.values.each do |v|
-      return nil if v.map{|i| constants[i]}.uniq.count != 1
-    end
-  end
-
-  def find_rules
-    Rule.select() do |rule|
-      rule.resulting_predicate.name == name && rule.resulting_predicate.parameters.count == count_params
     end
   end
 end

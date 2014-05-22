@@ -22,8 +22,8 @@ class BasicPredicate < ActiveRecord::Base
     end
   end
 
-  def parameters_position
-    Hash[[*parameters.map(&:name).map.with_index]].invert
+  def position_parameters
+    Hash[[*parameters.map(&:name).map.with_index{|p, i| [i, p]}]]
   end
 
   def count_params

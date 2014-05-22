@@ -8,7 +8,7 @@ class Fact < ActiveRecord::Base
       ? self : nil
   end
 
-  def constants_hash
+  def position_constants
     Hash[[*constants.map(&:name).map.with_index{|c, i| [i, c]}]]
   end
 

@@ -5,9 +5,10 @@ class SolverController < ApplicationController
   end
 
   def solve
+    purpose = Purpose.new
     respond_to do |format|
-      if purpose = Purpose.new(purpose_params)
-        format.js { render json: { result: purpose.print(purpose.decide), status: 'success' } }
+      if purpose.build(purpose_params.gsub(' ', ''))
+        format.js { render json: { result: purpose.print( purpose.decide ), status: 'success' } }
       else
         format.js { render json: { status: 'error' } }
       end
@@ -17,6 +18,6 @@ class SolverController < ApplicationController
   private
 
   def purpose_params
-    params[:purpose].gsub(' ', '')
+    params[:purpose]
   end
 end
