@@ -32,7 +32,6 @@ class Purpose
     solutions = []
     solutions += solutions_from_facts
     solutions += solutions_from_rules if @@visited_predicates[id] < 2
-    p solutions
     @@visited_predicates[id] -= 1
     solutions.compact.uniq
   end
@@ -54,7 +53,7 @@ class Purpose
     find_rules.flat_map do |rule|
       solutions = inner_join( compatible_solutions( predicate_solutions( rule ).compact ))
       pp = rule.resulting_predicate.position_parameters.invert
-      solutions.map{|s| s.inject({}){|h, p| k, v = p; h[pp[k]] = v if pp[k].present?; h}}
+      solutions.map{|s| s.inject({}){|h, p| k, v = p; h[pp[k]] = v if pp[k].present?; h}}.select{|s| !s.values.include? nil}
     end
   end
   def predicate_solutions rule
@@ -64,7 +63,8 @@ class Purpose
   end
 
   def compatible_solutions solutions
-    solutions.map{|ps| ps.select{|s| compatible_solution?(s, solutions)}}
+    3.times{ solutions.map!{|ps| ps.select{|s| compatible_solution?(s, solutions)}}}
+    solutions
   end
   def compatible_solution? solution, solutions
     solutions.map{|ps| ps.any?{|s| compatable_solutions?(s, solution)}}.all?
@@ -75,9 +75,13 @@ class Purpose
 
   def inner_join solutions
     return solutions.flatten if solutions.size == 1
-    hash = solutions_to_hash(solutions)
-    values = hash.inject([]){|s, v| key, value = v; s.empty? ? s = [*value] : s.product(value)}.map{|s| s.flatten}
-    values.map{|v| Hash[*hash.keys.zip(v).flatten]}
+    keys = solutions.flatten.flat_map(){|s| s.keys}.uniq
+    h = []
+    solutions.each{|s1| s1.each{|s11| solutions.each{|s2| s2.each{|s21| h << [s11, s21] if compatable_solutions?(s11, s21)}}}}
+    q = h.map{|sol| sol.inject({}){|h, s| s.each{|s1| k, v = s1; h[k] = v}; h}}.uniq
+    q1 = q.map{|s| keys.inject({}){|h, k| h[k] = s[k]; h}}
+    q2 = q1.map{|q1| q1.inject([]){|s, v| key, value = v; s.empty? ? s = [value] : s.product([value])}.flatten}
+    q2.map{|v| Hash[*keys.zip(v).flatten]}
   end
 
   def filter_solutions solutions
@@ -100,22 +104,5 @@ class Purpose
   end
   def constant? variable
     variable == variable.downcase
-  end
-
-
-
-
-  def hash_params_to_hash_numbers_params hash
-    hash.inject({}){|h, p| p.last.each{|n| h[n] = p.first}; h}
-  end
-
-  def solutions_to_hash solutions
-    solutions.flatten.inject({}) do |h, s|
-      s.each do |key, value|
-        h[key] ||= []
-        h[key] << value if !h[key].include?(value)
-      end
-      h
-    end
   end
 end
