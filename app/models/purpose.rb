@@ -13,6 +13,7 @@ class Purpose
     if check_params( params )
       self.name = params[/^\w*(?=\()/]
       self.variables = Hash[[*params[/(?<=\().*(?=\))/].split(',').map.with_index{|p, i| [i, p]}]]
+      @@visited_predicates.clear
     end
   end
 
@@ -31,8 +32,8 @@ class Purpose
     @@visited_predicates[id] += 1
     solutions = []
     solutions += solutions_from_facts
-    solutions += solutions_from_rules if @@visited_predicates[id] < 2
-    @@visited_predicates[id] -= 1
+    solutions += solutions_from_rules if @@visited_predicates[id] < 5
+    # @@visited_predicates[id] -= 1
     solutions.compact.uniq
   end
 
@@ -77,7 +78,9 @@ class Purpose
     return solutions.flatten if solutions.size == 1
     keys = solutions.flatten.flat_map(){|s| s.keys}.uniq
     h = []
-    solutions.each{|s1| s1.each{|s11| solutions.each{|s2| s2.each{|s21| h << [s11, s21] if compatable_solutions?(s11, s21)}}}}
+    #solutions.each{|s1| s1.each{|s11| solutions.each{|s2| s2.each{|s21| h << [s11, s21] if compatable_solutions?(s11, s21)}}}}
+    solutions.each{|s1| s1.each{|s11| h1 ||= [];  solutions.each{|s2| s2.each{|s21| h1 += [s11, s21] if compatable_solutions?(s11, s21)}}; h << h1.uniq }};
+
     q = h.map{|sol| sol.inject({}){|h, s| s.each{|s1| k, v = s1; h[k] = v}; h}}.uniq
     q1 = q.map{|s| keys.inject({}){|h, k| h[k] = s[k]; h}}
     q2 = q1.map{|q1| q1.inject([]){|s, v| key, value = v; s.empty? ? s = [value] : s.product([value])}.flatten}
